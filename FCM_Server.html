@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=UTF-8>
+		<title>FCM Server</title>
+		<script src=https://code.jquery.com/jquery-3.2.1.min.js></script>
+		<script>
+			/* 設定header原型 */
+			function FCM_Server_Header(){
+				return {
+					url: "https://fcm.googleapis.com/fcm/send",
+					headers: {
+						 Authorization: "key=",
+						"Content-Type": "application/json",
+					},
+					method: "POST",
+				};
+			}
+			/* 推播訊息雛形 */
+			function message_prototype() {
+				return {
+					// for iOS
+					content_available: true,
+				};
+			}
+			function review(){
+				/* scroll bottom */
+				scrollTo(0,document.body.scrollHeight);
+				/* 更新 Key (如果需要的話) */
+				var FCM_HEAD = FCM_Server_Header();
+				if ($("#excharge").prop("checked")) {
+					FCM_HEAD.headers.Authorization = "key="+$("#Authorization").val();
+				}
+				/* 取得 message雛形 */
+				var message = message_prototype();
+				var arr,key;
+				/* 彙整 data payload */
+				arr = $("#message").serializeArray();
+				key = arr.shift().value;
+				message[key] = {};
+				$.each(arr,(i,v) => message[key][v.name]=v.value);
+				if (message.data.badge.length==0) {
+					delete message.data.badge;
+				}
+				/* 彙整 target */
+				arr = $("#target").serializeArray();
+				key = arr.shift().value;
+				message[key] = [];
+				$.each(arr,(i,v) => {
+					if (v.value.length==0) return;
+					switch (v.name) {
+						case "to":
+						case "registration_ids":
+							message[key].push(v.value);
+						break;
+						case "condition":
+							message[key].push("'"+v.value+"' in topics");
+						break;
+					}
+				});
+				switch (key) {
+					case "to":
+						message[key] = message[key].join() || null;
+					break;
+					case "registration_ids":
+					break;
+					case "condition":
+						message[key] = message[key].join(" || ");
+					break;
+				}
+				/* 預覽 */
+				$("#headers").text(JSON.stringify(FCM_HEAD, null, 4));
+				$("#body").text(JSON.stringify(message, null, 4));
+			}
+			$(() => {
+				/* FCM Server 設定 */
+				$.ajaxSetup(FCM_Server_Header())
+				/* 結果 */
+				.complete = jqXHR => $("#complete").html("狀態: $1<br>回應:<br>$2"
+				.replace(/\$\d+/g, x => ({$1: jqXHR.status,$2: jqXHR.responseText,}[x])));
+				/* 編碼body */
+				$.ajaxPrefilter((o,d) => o.data = /*JSON.stringify*/($("#body").text()));
+				/* 覆蓋預設 Authorization Key (非必要) */
+				$(document).ajaxSend((_,jqXHR,s) => $("#excharge").prop("checked") && jqXHR.setRequestHeader("Authorization", "key="+$("#Authorization").val()))
+				/* UI 效果 */
+				$(document).ajaxStart(() => $("marquee").show() && $("#complete").hide());
+				$(document).ajaxStop (() => $("marquee").hide() && $("#complete").show());
+				$("#excharge").change(e => $("#Authorization").attr("disabled",!$(e.target).prop("checked")))
+				$("[name=type]").change(e => {
+					$(".target").attr("disabled",true);
+					$("[name="+e.target.value+"]").attr("disabled",false);
+				});
+				$("#to").attr("checked",true).trigger("change");
+			});
+		</script>
+		<style>
+			body {
+				padding-bottom: 150px;
+			}
+			#Authorization, .target, textarea {
+				width: 100%;
+			}
+			textarea {
+				height: 120px;
+				resize: vertical;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>簡易推播器</h1>
+		<h4>v1.0</h4>
+		<hr>
+		<h2>Server Key</h2>
+		<label for=excharge>Authorization (覆蓋預設)</label>
+		<input type=checkbox id=excharge>
+		<input type=text value id=Authorization disabled>
+		<hr>
+		<form id=message>
+			<h2>Message Payload (must be "data" type)</h2>
+			<input type=hidden name=type value=data>
+			<label>body</label><br/>
+			<input type=text   name=body value=汎亞移工-優質精選><br/>
+			<label>badge</label><br/>
+			<input type=number name=badge><br/>
+		</form>
+		<hr>
+		<form id=target>
+			<h2>Target Type</h2>
+			<input type=radio name=type value=to id=to>
+			<label for=to>單一裝置 (use "to")</label>
+			<input type=text  class=target name=to disabled value=/topics/I_AM_IOS>
+			<!--------------------------------------------------------------------------------------->
+			<input type=radio name=type value=registration_ids id=registration_ids>
+			<label for=registration_ids>多個裝置 (use "registration_ids")</label>
+			<input type=text  class=target name=registration_ids disabled>
+			<input type=text  class=target name=registration_ids disabled>
+			<!--------------------------------------------------------------------------------------->
+			<input type=radio name=type value=condition id=condition>
+			<label for=condition>指定訂閱 (use "condition")</label>
+			<input type=text  class=target name=condition disabled value=I_AM_IOS>
+			<input type=text  class=target name=condition disabled value=I_AM_ANDROID>			
+		</form>
+		<hr>
+		<h2>預覽</h2>
+		<label>Url and HEAD</label><br>
+		<textarea id=headers></textarea>
+		<label>POST BODY</label><br>
+		<textarea id=body></textarea>
+		<hr>
+		<h2>送出推播訊息</h2>
+		<input type=button value=預覽 onclick=review()>
+		<input type=submit onclick="review();$.ajax()">
+		<hr />
+		<marquee width=100 style=display:none>傳送中</marquee>
+		<div id="complete"></div>
+	</body>
+</html>
