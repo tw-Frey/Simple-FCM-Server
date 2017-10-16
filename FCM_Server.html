@@ -20,7 +20,7 @@
 			function message_prototype() {
 				return {
 					// for iOS
-					content_available: true,
+					//content_available: true,
 				};
 			}
 			function review(){
@@ -34,13 +34,13 @@
 				/* 取得 message雛形 */
 				var message = message_prototype();
 				var arr,key;
-				/* 彙整 data payload */
+				/* 彙整 message payload */
 				arr = $("#message").serializeArray();
 				key = arr.shift().value;
 				message[key] = {};
 				$.each(arr,(i,v) => message[key][v.name]=v.value);
-				if (message.data.badge.length==0) {
-					delete message.data.badge;
+				if (message[key].badge.length==0) {
+					delete message[key].badge;
 				}
 				/* 彙整 target */
 				arr = $("#target").serializeArray();
@@ -85,18 +85,40 @@
 				/* UI 效果 */
 				$(document).ajaxStart(() => $("marquee").show() && $("#complete").hide());
 				$(document).ajaxStop (() => $("marquee").hide() && $("#complete").show());
-				$("#excharge").change(e => $("#Authorization").attr("disabled",!$(e.target).prop("checked")))
+				$("#excharge").change(e => $("#Authorization").prop("disabled",!$(e.target).prop("checked")))
 				$("[name=type]").change(e => {
-					$(".target").attr("disabled",true);
-					$("[name="+e.target.value+"]").attr("disabled",false);
+					// 重置
+					$(".target").prop("disabled",true);
+					$("."+e.target.id).prop("disabled",false);
 				});
-				$("#to").attr("checked",true).trigger("change");
+				// 選項 filter 效果
+				$("[name=payload]").change(e => {
+					// 重置
+					$("[name=type]").prop("checked",false);
+					// 選取
+					var id = e.target.id.slice(0,-4);
+					$("#android").prop("disabled",id=="ios").prop("checked" ,id=="android");
+					$("#ios").prop("disabled",id=="android").prop("checked" ,id!="android");
+					// trigger
+					$("#"+id).trigger("change");
+				});
+				$("#android_msg").prop("checked",true).trigger("change");
 			});
 		</script>
 		<style>
 			body {
 				padding-bottom: 150px;
 			}
+			input:not(.ids) {
+				margin-top: 10px;
+				margin-bottom: 10px;
+			}
+			input.ids:last-child {
+				margin-bottom: 10px;
+			}
+			label+input, label+br+input {
+				margin-top: 0!important;
+			}			
 			#Authorization, .target, textarea {
 				width: 100%;
 			}
@@ -108,7 +130,7 @@
 	</head>
 	<body>
 		<h1>簡易推播器</h1>
-		<h4>v1.0</h4>
+		<h4>v1.1</h4>
 		<hr>
 		<h2>Server Key</h2>
 		<label for=excharge>Authorization (覆蓋預設)</label>
@@ -116,8 +138,11 @@
 		<input type=text value id=Authorization disabled>
 		<hr>
 		<form id=message>
-			<h2>Message Payload (must be "data" type)</h2>
-			<input type=hidden name=type value=data>
+			<h2>Message Payload</h2>
+			<input type=radio name=payload value=data id=android_msg>
+			<label for=android_msg>Android</label>
+			<input type=radio name=payload value=notification id=ios_msg>
+			<label for=ios_msg>iOS</label><br/>
 			<label>body</label><br/>
 			<input type=text   name=body value=汎亞移工-優質精選><br/>
 			<label>badge</label><br/>
@@ -128,17 +153,30 @@
 			<h2>Target Type</h2>
 			<input type=radio name=type value=to id=to>
 			<label for=to>單一裝置 (use "to")</label>
-			<input type=text  class=target name=to disabled value=/topics/I_AM_IOS>
+			<input type=text  class="target to" name=to disabled placeholder=輸入token>
 			<!--------------------------------------------------------------------------------------->
-			<input type=radio name=type value=registration_ids id=registration_ids>
-			<label for=registration_ids>多個裝置 (use "registration_ids")</label>
-			<input type=text  class=target name=registration_ids disabled>
-			<input type=text  class=target name=registration_ids disabled>
+			<div>
+			<input type=radio name=type value=registration_ids id=ids>
+			<label for=ids>多個裝置 (use "registration_ids")</label>
+			<input type=text  class="target ids" name=registration_ids disabled placeholder=輸入token(至少一個)>
+			<input type=text  class="target ids" name=registration_ids disabled placeholder=輸入token(至少一個)>
+			<input type=text  class="target ids" name=registration_ids disabled placeholder=輸入token(至少一個)>
+			<input type=text  class="target ids" name=registration_ids disabled placeholder=輸入token(至少一個)>
+			<input type=text  class="target ids" name=registration_ids disabled placeholder=輸入token(至少一個)>
+			</div>
 			<!--------------------------------------------------------------------------------------->
-			<input type=radio name=type value=condition id=condition>
-			<label for=condition>指定訂閱 (use "condition")</label>
-			<input type=text  class=target name=condition disabled value=I_AM_IOS>
-			<input type=text  class=target name=condition disabled value=I_AM_ANDROID>			
+			<input type=radio name=type value=condition id=android>
+			<label for=android>(僅供開發測試使用) 指定 Android 裝置</label>
+			<input type=hidden  class="target android" name=condition disabled value=I_AM_ANDROID><br>
+			<!--------------------------------------------------------------------------------------->
+			<input type=radio name=type value=condition id=ios>
+			<label for=ios>(僅供開發測試使用) 指定 iOS 裝置</label>
+			<input type=hidden  class="target ios" name=condition disabled value=I_AM_IOS><br>
+			<!--------------------------------------------------------------------------------------->
+ 			<input type=radio name=type value=condition id=topics>
+			<label for=topics>(僅供開發測試使用) 指定 Android+iOS 裝置</label>
+			<input type=hidden  class="target topics" name=condition disabled value=I_AM_ANDROID>
+			<input type=hidden  class="target topics" name=condition disabled value=I_AM_IOS>
 		</form>
 		<hr>
 		<h2>預覽</h2>
