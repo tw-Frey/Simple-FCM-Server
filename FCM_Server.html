@@ -24,8 +24,6 @@
 				};
 			}
 			function review(){
-				/* scroll bottom */
-				scrollTo(0,document.body.scrollHeight);
 				/* 更新 Key (如果需要的話) */
 				var FCM_HEAD = FCM_Server_Header();
 				if ($("#excharge").prop("checked")) {
@@ -38,26 +36,14 @@
 				arr = $("#message").serializeArray();
 				key = arr.shift().value;
 				message[key] = {};
-				$.each(arr,(i,v) => message[key][v.name]=v.value);
-				if (message[key].badge.length==0) {
-					delete message[key].badge;
-				}
+				$.grep(arr, v => v.name!="badge"||v.value.length>0)
+				 .map(v => message[key][v.name] = v.value);
 				/* 彙整 target */
 				arr = $("#target").serializeArray();
 				key = arr.shift().value;
-				message[key] = [];
-				$.each(arr,(i,v) => {
-					if (v.value.length==0) return;
-					switch (v.name) {
-						case "to":
-						case "registration_ids":
-							message[key].push(v.value);
-						break;
-						case "condition":
-							message[key].push("'"+v.value+"' in topics");
-						break;
-					}
-				});
+				message[key] = $.grep(arr, v => v.value.length>0).map(v => 
+					v.name == "condition" ? "'"+v.value+"' in topics" : v.value
+				);
 				switch (key) {
 					case "to":
 						message[key] = message[key].join() || null;
@@ -71,6 +57,8 @@
 				/* 預覽 */
 				$("#headers").text(JSON.stringify(FCM_HEAD, null, 4));
 				$("#body").text(JSON.stringify(message, null, 4));
+				/* scroll bottom */
+				scrollTo(0,document.body.scrollHeight);
 			}
 			$(() => {
 				/* FCM Server 設定 */
@@ -130,7 +118,7 @@
 	</head>
 	<body>
 		<h1>簡易推播器</h1>
-		<h4>v1.1</h4>
+		<h4>v1.2</h4>
 		<hr>
 		<h2>Server Key</h2>
 		<label for=excharge>Authorization (覆蓋預設)</label>
@@ -140,11 +128,13 @@
 		<form id=message>
 			<h2>Message Payload</h2>
 			<input type=radio name=payload value=data id=android_msg>
-			<label for=android_msg>Android</label>
+			<label for=android_msg>Data only</label>
 			<input type=radio name=payload value=notification id=ios_msg>
-			<label for=ios_msg>iOS</label><br/>
+			<label for=ios_msg>Notification only</label><br/>
+			<label>title</label><br/>
+			<input type=text   name=title value=汎亞移工><br/>
 			<label>body</label><br/>
-			<input type=text   name=body value=汎亞移工-優質精選><br/>
+			<input type=text   name=body  value=優質精選><br/>
 			<label>badge</label><br/>
 			<input type=number name=badge><br/>
 		</form>
