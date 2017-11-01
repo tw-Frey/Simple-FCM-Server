@@ -19,6 +19,8 @@
 			/* 推播訊息雛形 */
 			function message_prototype() {
 				return {
+					// for Data Payload
+					"priority" : "high",
 					// for iOS
 					//content_available: true,
 				};
@@ -55,8 +57,8 @@
 					break;
 				}
 				/* 預覽 */
-				$("#headers").text(JSON.stringify(FCM_HEAD, null, 4));
-				$("#body").text(JSON.stringify(message, null, 4));
+				$("#headers").val(JSON.stringify(FCM_HEAD, null, 4));
+				$("#body").val(JSON.stringify(message, null, 4));
 				/* scroll bottom */
 				scrollTo(0,document.body.scrollHeight);
 			}
@@ -67,7 +69,7 @@
 				.complete = jqXHR => $("#complete").html("狀態: $1<br>回應:<br>$2"
 				.replace(/\$\d+/g, x => ({$1: jqXHR.status,$2: jqXHR.responseText,}[x])));
 				/* 編碼body */
-				$.ajaxPrefilter((o,d) => o.data = /*JSON.stringify*/($("#body").text()));
+				$.ajaxPrefilter((o,d) => o.data = /*JSON.stringify*/($("#body").val()));
 				/* 覆蓋預設 Authorization Key (非必要) */
 				$(document).ajaxSend((_,jqXHR,s) => $("#excharge").prop("checked") && jqXHR.setRequestHeader("Authorization", "key="+$("#Authorization").val()))
 				/* UI 效果 */
@@ -118,7 +120,7 @@
 	</head>
 	<body>
 		<h1>簡易推播器</h1>
-		<h4>v1.2</h4>
+		<h4>v1.3</h4>
 		<hr>
 		<h2>Server Key</h2>
 		<label for=excharge>Authorization (覆蓋預設)</label>
