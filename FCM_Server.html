@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<meta charset=UTF-8>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>FCM Server</title>
 		<script src=https://code.jquery.com/jquery-3.2.1.min.js></script>
 		<script>
@@ -94,6 +95,22 @@
 				});
 				$("#android_msg").prop("checked",true).trigger("change");
 			});
+			$(() => {
+				const Throw = s => { throw(s) };
+				const query = location.search || Throw("url 沒有 query")
+				const Authorization = (query.match(/Authorization=([^&]+)/)||Throw("沒有Authorization"))[1]
+				const title = (query.match(/title=([^&]+)/)||Throw("沒有title"))[1]
+				const body  = (query.match(/body=([^&]+)/) ||Throw("沒有body") )[1]
+				const token = (query.match(/token=([^&]+)/)||Throw("沒有token"))[1]
+				$("#excharge").click()
+				$("#Authorization").val(Authorization).removeAttr("disabled")
+				$("#ios_msg").click()
+				$("input[name=title]").val(title)
+				$("input[name=body]") .val(body)
+				$("#to").click()
+				$("input[name=to]").val(token)
+				$("input[type=submit]").click()
+			})
 		</script>
 		<style>
 			body {
@@ -120,7 +137,7 @@
 	</head>
 	<body>
 		<h1>簡易推播器</h1>
-		<h4>v1.3</h4>
+		<h4>v1.4</h4>
 		<hr>
 		<h2>Server Key</h2>
 		<label for=excharge>Authorization (覆蓋預設)</label>
