@@ -101,7 +101,8 @@
 				const Authorization = (query.match(/Authorization=([^&]+)/)||Throw("沒有Authorization"))[1]
 				const title = (query.match(/title=([^&]+)/)||Throw("沒有title"))[1]
 				const body  = (query.match(/body=([^&]+)/) ||Throw("沒有body") )[1]
-				const token = (query.match(/token=([^&]+)/)||Throw("沒有token"))[1]
+				const which = (query.match(/token=([^&]+)/)||Throw("沒有token"))[1]
+				const token = (query.match(RegExp(which+"=([^&]+)"))||Throw("沒有"+which))[1]
 				$("#excharge").click()
 				$("#Authorization").val(Authorization).removeAttr("disabled")
 				$("#ios_msg").click()
@@ -137,7 +138,7 @@
 	</head>
 	<body>
 		<h1>簡易推播器</h1>
-		<h4>v1.4</h4>
+		<h4>v1.5</h4>
 		<hr>
 		<h2>Server Key</h2>
 		<label for=excharge>Authorization (覆蓋預設)</label>
